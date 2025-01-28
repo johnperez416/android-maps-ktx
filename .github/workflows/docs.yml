@@ -29,32 +29,38 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - name: Checkout android-maps-ktx
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4.5.0
+      with:
+        java-version: '21'
+        distribution: 'temurin'
 
     # Run dokka and create tar
     - name: Generate documentation
       run: |
-        ./gradlew dokka
+        ./gradlew dokkaHtml
 
         echo "Creating tar for generated docs"
         cd $GITHUB_WORKSPACE/maps-utils-ktx/build/documentation && tar cvf ~/maps-utils-docs.tar .
         cd $GITHUB_WORKSPACE/maps-ktx/build/documentation && tar cvf ~/maps-docs.tar .
-        cd $GITHUB_WORKSPACE/maps-v3-ktx/build/documentation && tar cvf ~/maps-v3-docs.tar .
-        cd $GITHUB_WORKSPACE/maps-utils-v3-ktx/build/documentation && tar cvf ~/maps-utils-v3-docs.tar .
 
         echo "Unpacking tar into gh-pages branch"
         git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
-        cd $GITHUB_WORKSPACE && git checkout gh-pages && tar xvf ~/maps-docs.tar && tar xvf ~/maps-utils-docs.tar && tar xvf ~/maps-v3-docs.tar && tar xvf ~/maps-utils-v3-docs.tar
+        cd $GITHUB_WORKSPACE && git checkout gh-pages && tar xvf ~/maps-docs.tar && tar xvf ~/maps-utils-docs.tar
 
     # Commit changes and create a PR
     - name: PR Changes
-      uses: peter-evans/create-pull-request@v3
+      uses: peter-evans/create-pull-request@v7
       with:
         token: ${{ secrets.SYNCED_GITHUB_TOKEN_REPO }}
         commit-message: 'docs: Update docs'
         author: googlemaps-bot <googlemaps-bot@google.com>
         committer: googlemaps-bot <googlemaps-bot@google.com>
-        labels: docs
+        labels: |
+          docs
+          automerge
         title: 'docs: Update docs'
         body: |
             Updated GitHub pages with latest from `./gradlew dokka`.

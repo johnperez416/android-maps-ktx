@@ -16,47 +16,21 @@ It enables you to write more concise, idiomatic Kotlin. Each set of extensions c
 ## Requirements
 * Kotlin-enabled project
 * Kotlin coroutines
-* API level 15+
+* API level 21+
+* An [API key](https://developers.google.com/maps/documentation/android-sdk/get-api-key)
 
 ## Installation
-
-If you are using the Maps SDK through Google Play Services:
 
 ```groovy
 dependencies {
 
     // KTX for the Maps SDK for Android library
-    implementation 'com.google.maps.android:maps-ktx:3.3.0'
+    implementation 'com.google.maps.android:maps-ktx:5.1.1'
 
     // KTX for the Maps SDK for Android Utility Library
-    implementation 'com.google.maps.android:maps-utils-ktx:3.3.0'
-
-    // It is recommended to also include the latest Maps SDK and/or Utility Library versions
-    // as well to ensure that you have the latest features and bug fixes.
-    implementation 'com.google.android.gms:play-services-maps:<latest-version>'
-    implementation 'com.google.maps.android:android-maps-utils:<latest-version>'
+    implementation 'com.google.maps.android:maps-utils-ktx:5.1.1'
 }
 ```
-
-(**Deprecated**) ~Alternatively, if you are using the Maps SDK through the standalone V3 BETA distribution:~
-
-```groovy
-dependencies {
-
-    // KTX for the Maps SDK for Android V3 BETA Library
-    implementation 'com.google.maps.android:maps-v3-ktx:3.3.0'
-
-    // KTX for the Maps SDK for Android V3 BETA Utility Library
-    implementation 'com.google.maps.android:maps-utils-v3-ktx:3.3.0'
-
-    // It is recommended to also include the latest Maps SDK and/or Utility Library versions
-    // as well to ensure that you have the latest features and bug fixes.
-    implementation 'com.google.android.libraries.maps:maps:3.3.0-beta'
-    implementation 'com.google.maps.android:android-maps-utils-v3:<latest-version>'
-}
-```
-
-_**Note**_: The Beta version of the SDK is deprecated and scheduled for decommissioning. A future version of the SDK will provide similar support for Beta features. See the [release notes](https://developers.google.com/maps/documentation/android-sdk/releases#2021-08-18) for more information.
 
 ## Example Usage
 
@@ -71,8 +45,8 @@ This repository includes a [demo app](app) that illustrates the use of this KTX 
 To run the demo app, you'll have to:
 
 1. [Get a Maps API key](https://developers.google.com/maps/documentation/android-sdk/get-api-key)
-1. Create a file in the root directory called `secure.properties` (this file should *NOT* be under version control to protect your API key)
-1. Add a single line to `secure.properties` that looks like `MAPS_API_KEY=YOUR_API_KEY`, where `YOUR_API_KEY` is the API key you obtained in the first step
+1. Create a file in the root directory called `secrets.properties` (this file should *NOT* be under version control to protect your API key)
+1. Add a single line to `secrets.properties` that looks like `MAPS_API_KEY=YOUR_API_KEY`, where `YOUR_API_KEY` is the API key you obtained in the first step
 1. Build and run
 
 ### Maps SDK KTX
@@ -135,8 +109,6 @@ override fun onCreate(savedInstanceState: Bundle?) {
 ```
 
 #### Flow
-
-> **Note**: The following feature utilizes an experimental coroutine API. To use this, you will have to add the `@OptIn(ExperimentalCoroutinesApi::class)` at the site of its usage as well as the compiler flag `-Xopt-in=kotlin.RequiresOptIn`.
 
 Listing to camera events can be collected via [Kotlin Flow](kotlin-flow). 
 

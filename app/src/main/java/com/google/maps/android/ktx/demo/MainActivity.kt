@@ -23,7 +23,10 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
@@ -44,8 +47,6 @@ import com.google.maps.android.ktx.model.cameraPosition
 import com.google.maps.android.ktx.utils.collection.addMarker
 import com.google.maps.android.ktx.utils.geojson.geoJsonLayer
 import com.google.maps.android.ktx.utils.kml.kmlLayer
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.json.JSONException
 
@@ -53,7 +54,7 @@ import org.json.JSONException
  * A demo of multiple layers on the map.
  *
  * To add your Maps API key to this project:
- *   1. Create a file ./secure.properties
+ *   1. Create a file ./secrets.properties
  *   2. Add this line, where YOUR_API_KEY is your API key:
  *        MAPS_API_KEY=YOUR_API_KEY
  */
@@ -63,38 +64,39 @@ class MainActivity : AppCompatActivity() {
     private val sanFrancisco = LatLng( 37.7576, -122.4194)
     private var currentLocation = london
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val isRestore = savedInstanceState != null
         setContentView(R.layout.activity_main)
 
         if (BuildConfig.MAPS_API_KEY.isEmpty()) {
-            Toast.makeText(this, "Add your own API key in ./secure.properties as MAPS_API_KEY=YOUR_API_KEY", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Add your own API key in ./secrets.properties as MAPS_API_KEY=YOUR_API_KEY", Toast.LENGTH_LONG).show()
         }
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        lifecycle.coroutineScope.launchWhenCreated {
-            val googleMap = mapFragment.awaitMap()
-            if (!isRestore) {
-                googleMap.awaitMapLoad()
-                googleMap.animateCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        london,
-                        10F
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
+                val googleMap = mapFragment.awaitMap()
+                if (!isRestore) {
+                    googleMap.awaitMapLoad()
+                    googleMap.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            london,
+                            10F
+                        )
                     )
-                )
-            }
-            showMapLayers(googleMap)
-            addButtonClickListener(googleMap)
-            launch {
-                googleMap.cameraMoveStartedEvents().collect {
-                    Log.d(TAG, "Camera moved - reason $it")
                 }
-            }
-            launch {
-                googleMap.cameraIdleEvents().collect {
-                    Log.d(TAG, "Camera is idle.")
+                showMapLayers(googleMap)
+                addButtonClickListener(googleMap)
+                launch {
+                    googleMap.cameraMoveStartedEvents().collect {
+                        Log.d(TAG, "Camera moved - reason $it")
+                    }
+                }
+                launch {
+                    googleMap.cameraIdleEvents().collect {
+                        Log.d(TAG, "Camera is idle.")
+                    }
                 }
             }
         }
@@ -103,34 +105,38 @@ class MainActivity : AppCompatActivity() {
     private suspend fun addButtonClickListener(googleMap: GoogleMap) {
         findViewById<Button>(R.id.button_animate_camera).setOnClickListener {
             currentLocation = if (currentLocation == london) sanFrancisco else london
-            lifecycle.coroutineScope.launchWhenStarted {
-                googleMap.run {
-                    awaitAnimateCamera(CameraUpdateFactory.newCameraPosition(
-                        cameraPosition {
-                            target(currentLocation)
-                            zoom(0.0f)
-                            tilt(0.0f)
-                            bearing(0.0f)
-                        }
-                    ))
-                    awaitMapLoad()
-                    awaitAnimateCamera(CameraUpdateFactory.newCameraPosition(
-                        cameraPosition {
-                            target(currentLocation)
-                            zoom(10.0f)
-                            bearing(180f)
-                            tilt(75f)
-                            build()
-                        }
-                    ))
+            lifecycleScope.launch {
+                lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
+                    googleMap.run {
+                        awaitAnimateCamera(CameraUpdateFactory.newCameraPosition(
+                            cameraPosition {
+                                target(currentLocation)
+                                zoom(0.0f)
+                                tilt(0.0f)
+                                bearing(0.0f)
+                            }
+                        ))
+                        awaitMapLoad()
+                        awaitAnimateCamera(CameraUpdateFactory.newCameraPosition(
+                            cameraPosition {
+                                target(currentLocation)
+                                zoom(10.0f)
+                                bearing(180f)
+                                tilt(75f)
+                                build()
+                            }
+                        ))
+                    }
                 }
             }
         }
 
         findViewById<Button>(R.id.button_snapshot).setOnClickListener {
-            lifecycle.coroutineScope.launchWhenStarted {
-                val bitmap = googleMap.awaitSnapshot()
-                findViewById<ImageView>(R.id.image_view_snapshot).setImageBitmap(bitmap)
+            lifecycleScope.launch {
+                lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    val bitmap = googleMap.awaitSnapshot()
+                    findViewById<ImageView>(R.id.image_view_snapshot).setImageBitmap(bitmap)
+                }
             }
         }
     }
